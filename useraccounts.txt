@@ -1,4 +1,4 @@
-long 123456 tranduclong 1000000
+long 123456 tranduclong 500000
 phat 123123 hoangvutanphat 100000
 khanh 123321 nguyengiakhanh 100000
 user1 123456 username1 100000
