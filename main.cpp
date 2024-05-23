@@ -40,13 +40,14 @@ bool isAdmin(const string& id,const string& pin);
 bool deposit (const string& id,const int& amount,vector<User>& accounts);
 bool withdraw (const string& id,const int& amount,vector<User>& accounts);
 int getBalance(const string& id,const vector<User>& accounts);
-void displayInfo(const string &id,const vector<User>& accounts);
 bool exceedLimit (const string& id, const vector<Transaction>& transHistory);
 void recordTransaction (const string& id, const int& amount, vector<Transaction>& trans);
 void saveTransactionHistory (const string& id,const vector<Transaction>& transHistory);
 int execution(const string& id,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
 void updateData(vector<User>& accounts);
 void printMoney(const int& amount);
+void cls();
+void header();
 
 
 int main()
@@ -56,17 +57,21 @@ int main()
     vector<User>accounts;
     string id,pin;
     string openID,openPin;
+    int wrongTimes = 0;
     while(1){
-        cout << "Nhap id admin: ";
+        cls();
+        cout << "      Dang nhap bang tai khoan admin de khoi dong thiet bi\n";
+        cout << "Nhap ID admin: ";
         cin >> id;
-        cout << "Nhap pin: ";
+        cout << "Nhap PIN: ";
         cin >> pin;
         if (isAdmin(id,pin)){
             openID = id;
             openPin = pin;
             accounts = readAccountFromFile(USER_ACCOUNT_FILE);
+            cout << " ===============================================================" << '\n';
+            cout << "                    Thong bao!\n";
             cout << "Khoi dong thiet bi thanh cong!\n";
-            cout << "Xin moi thuc hien giao dich!\n";
             Sleep(1000);
             system("cls");
             break;
@@ -74,19 +79,33 @@ int main()
         else{
             cout << "Tai khoan khong hop le\n";
             cout << "Xin moi nhap lai\n";
-            Sleep(1000);
-            system("cls");
+            wrongTimes++;
+            if (wrongTimes >= wrongLimit){
+                Sleep(1000);
+                system("cls");
+                header();
+                cout << "                    Thong bao!\n";
+                cout << "Tai khoan va mat khau sai vuot qua so lan cho phep!\n";
+                cout << "Vi ly do bao mat, thiet bi se tu dong thoat sau 3 giay nua\n";
+                Sleep(3000);
+                exit(0);
+            }
+            Sleep(1500);
         }
     }
-    int wrongTimes = 0;
+    wrongTimes = 0;
     while (1){
+        cls();
         cout << "Nhap id: ";
         cin >> id;
         cout << "Nhap pin: ";
         cin >> pin;
         if (isUser(id,pin)){
+            cls();
             cout << "Dang nhap thanh cong!\n";
             cout << "Moi ban thuc hien giao dich\n";
+            Sleep(1500);
+            cls();
             int isRunning = true;
             int option = 0;
             while (isRunning){
@@ -96,6 +115,7 @@ int main()
                     Sleep(2500);
                     break;
                 }
+                cout << "Xin moi ban nhap lua chon giao dich.\n";
                 cout << "1. Nop tien\n";
                 cout << "2. Rut tien\n";
                 cout << "3. Kiem tra so du\n";
@@ -262,7 +282,7 @@ void saveTransactionHistory (const string& id,const vector<Transaction>& transHi
 }
 int execution(const string& id,vector<User>& accounts,vector<Transaction>& transHistory,const int& option){
     Sleep(1000);
-    system("cls");
+    cls();
     int amount = 0;
     switch (option){
         case 1:{
@@ -335,4 +355,24 @@ void printMoney(const int& amount){
     }
     reverse(r.begin(),r.end());
     cout << r << '\n';
+}
+void header() {
+    cout << " ______________________________________________________________ " << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|            DO AN PBL1: DU AN LAP TRINH TINH TOAN             |" << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|                DE TAI:  XAY DUNG UNG DUNG                    |" << '\n';
+    cout << "|              THUC HIEN GIAO DICH TREN MAY ATM                |" << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|           GVHD: Tran Ho Thuy Tien                            |" << '\n';
+    cout << "|           Nhom thuc hien:                                    |" << '\n';
+    cout << "|              Tran Duc Long     (23T_Nhat1)  MSSV: 102230027  |" << '\n';
+    cout << "|              Hoang Vu Tan Phat (19TCLC_DT4) MSSV: 102190182  |" << '\n';
+    cout << "|              Nguyen Gia Khanh  (19TCLC_DT3) MSSV: 102190120  |" << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|______________________________________________________________|" << '\n';
+}
+void cls(){
+    system("cls");
+    header();
 }
