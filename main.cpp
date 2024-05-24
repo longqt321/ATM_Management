@@ -45,17 +45,8 @@ void saveTransactionHistory (const string& id,const vector<Transaction>& transHi
 int execution(const string& id,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
 void updateData(vector<User>& accounts);
 void printMoney(const int& amount);
-
-
-
-int main()
-{
-    initConsole();
-    int isOn = 0;
-    vector<Transaction>transHistory;
-    vector<User>accounts;
+bool adminAuth(){
     string id,pin;
-    string openID,openPin;
     int wrongTimes = 0;
     while(1){
         header();
@@ -65,15 +56,12 @@ int main()
         cout << "Nhập mã PIN: ";
         cin >> pin;
         if (isAdmin(id,pin)){
-            openID = id;
-            openPin = pin;
-            accounts = readAccountFromFile(USER_ACCOUNT_FILE);
             cout << " ===============================================================" << '\n';
             cout << "                           THÔNG BÁO!\n";
             cout << "                 KHỞI ĐỘNG THIẾT BỊ THÀNH CÔNG!\n";
             Sleep(2000);
             system("cls");
-            break;
+            return true;
         }
         else{
             cout << "Tài khoản không hợp lệ\n";
@@ -86,14 +74,18 @@ int main()
                 cout << "                           THÔNG BÁO!\n";
                 cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
                 cout << "Vì lý do bảo mật, thiết bị sẽ tự động thoát sau 3 giây nữa\n";
-                saveTransactionHistory(id,transHistory);
+                return false;
                 Sleep(3000);
-                exit(0);
             }
             Sleep(1500);
         }
     }
-    wrongTimes = 0;
+}
+void Working(){
+    vector<Transaction>transHistory;
+    vector<User>accounts = readAccountFromFile(USER_ACCOUNT_FILE);
+    int wrongTimes = 0;
+    string id,pin;
     while (1){
         header();
         cout << "Nhập ID: ";
@@ -142,7 +134,7 @@ int main()
             cout << "Cảm ơn quý khách. Chúc quý khách một ngày tốt lành\n";
             Sleep(1000);
         }
-        else if (isAdmin(id,pin) && id == openID && pin == openPin){
+        else if (isAdmin(id,pin)){
             cout << "Đang lưu lịch sử giao dịch...\n";
             saveTransactionHistory(id,transHistory);
             Sleep(3000);
@@ -164,6 +156,18 @@ int main()
         if (wrongTimes >= wrongLimit)   exit(0);
         system("cls");
     }
+}
+
+
+
+int main()
+{
+    initConsole();
+    int isOn = 0;
+    if (adminAuth() == false){
+        exit(0);
+    }
+    Working();
     return 0;
 }
 
@@ -217,7 +221,7 @@ bool isAdmin(const string& id,const string& pin){
 bool deposit (const string& id,const int& amount,vector<User>& accounts){
     if (amount <= 0)    return false;
     if (amount % 50000 != 0){
-        cout << "Vui long nhap so tien la boi so cua 50000\n";
+        cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
         return false;
     }
     for (User& account: accounts){
@@ -231,7 +235,7 @@ bool deposit (const string& id,const int& amount,vector<User>& accounts){
 bool withdraw (const string& id,const int& amount,vector<User>& accounts){
     if (amount <= 0)    return false;
     if (amount % 50000 != 0){
-        cout << "Vui long nhap so tien la boi so cua 50000\n";
+        cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
         return false;
     }
     for (User& account: accounts){

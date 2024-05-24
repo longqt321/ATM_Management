@@ -1,11 +1,21 @@
+#define _WIN32_WINNT 0x0500
 #include <windows.h>
 #include <iostream>
+#include "console.h"
 
 using namespace std;
 
 void SetWindowSize(SHORT width, SHORT height)
 {
-    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE hStdout;
+    COORD coord;
+    BOOL ok;
+
+    hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+    coord.X = width;
+    coord.Y = height;
+    ok = SetConsoleScreenBufferSize(hStdout, coord);
+
 
     SMALL_RECT WindowSize;
     WindowSize.Top = 0;
@@ -13,19 +23,8 @@ void SetWindowSize(SHORT width, SHORT height)
     WindowSize.Right = width - 1;
     WindowSize.Bottom = height - 1;
 
-    SetConsoleWindowInfo(hStdout, 1, &WindowSize);
+    SetConsoleWindowInfo(hStdout, ok, &WindowSize);
 }
-void SetScreenBufferSize(SHORT width, SHORT height)
-{
-    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    COORD NewSize;
-    NewSize.X = width;
-    NewSize.Y = height;
-
-    SetConsoleScreenBufferSize(hStdout, NewSize);
-}
-
 void ShowScrollbar(BOOL Show)
 {
     HWND hWnd = GetConsoleWindow();
@@ -53,13 +52,12 @@ void DisableResizeWindow()
 
 void initConsole(){
     ShowScrollbar(0);
-    hideConsoleButton();
+    //hideConsoleButton();
     SetConsoleOutputCP(65001);
     SetConsoleTitle(TEXT("ATM Management"));
     DisableResizeWindow();
 
-    SetWindowSize(64,50);
-    SetScreenBufferSize(64,50);
+    SetWindowSize(65,50);
 }
 
 void header() {
