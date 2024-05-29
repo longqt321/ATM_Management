@@ -41,133 +41,22 @@ bool withdraw (const string& id,const int& amount,vector<User>& accounts);
 int getBalance(const string& id,const vector<User>& accounts);
 bool exceedLimit (const string& id, const vector<Transaction>& transHistory);
 void recordTransaction (const string& id, const int& amount, vector<Transaction>& trans);
-void saveTransactionHistory (const string& id,const vector<Transaction>& transHistory);
+void saveTransactionHistory (const vector<Transaction>& transHistory);
 int execution(const string& id,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
 void updateData(vector<User>& accounts);
-void printMoney(const int& amount);
-bool adminAuth(){
-    string id,pin;
-    int wrongTimes = 0;
-    while(1){
-        header();
-        cout << "      ĐĂNG NHẬP BẰNG TÀI KHOẢN ADMIN ĐỂ KHỞI ĐỘNG THIẾT BỊ\n";
-        cout << "Nhập ID Admin: ";
-        cin >> id;
-        cout << "Nhập mã PIN: ";
-        cin >> pin;
-        if (isAdmin(id,pin)){
-            cout << " ===============================================================" << '\n';
-            cout << "                           THÔNG BÁO!\n";
-            cout << "                 KHỞI ĐỘNG THIẾT BỊ THÀNH CÔNG!\n";
-            Sleep(2000);
-            system("cls");
-            return true;
-        }
-        else{
-            cout << "Tài khoản không hợp lệ\n";
-            cout << "Xin mời nhập lại\n";
-            wrongTimes++;
-            if (wrongTimes >= wrongLimit){
-                Sleep(1000);
-                system("cls");
-                header();
-                cout << "                           THÔNG BÁO!\n";
-                cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
-                cout << "Vì lý do bảo mật, thiết bị sẽ tự động thoát sau 3 giây nữa\n";
-                return false;
-                Sleep(3000);
-            }
-            Sleep(1500);
-        }
-    }
-}
-void Working(){
-    vector<Transaction>transHistory;
-    vector<User>accounts = readAccountFromFile(USER_ACCOUNT_FILE);
-    int wrongTimes = 0;
-    string id,pin;
-    while (1){
-        header();
-        cout << "Nhập ID: ";
-        cin >> id;
-        cout << "Nhập mã PIN: ";
-        cin >> pin;
-        if (isUser(id,pin)){
-            header();
-            cout << "Đăng nhập thành công!\n";
-            cout << "Mời bạn thực hiện giao dịch\n";
-            Sleep(1500);
-            header();
-            int isRunning = true;
-            int option = 0;
-            while (isRunning){
-                if (exceedLimit(id,transHistory)){
-                    cout << "Bạn đã thực hiện quá số lần giao dịch trong 1 ngày\n";
-                    cout << "Xin hãy quay lại vào hôm sau\n";
-                    Sleep(2500);
-                    break;
-                }
-                header();
-                cout << "Xin mời bạn nhập lựa chọn giao dịch\n";
-                cout << "1. Nộp tiền\n";
-                cout << "2. Rút tiền\n";
-                cout << "3. Kiểm tra số dư\n";
-                cout << "0. Thoát\n";
-                cout << "Lựa chọn của quý khách là: ";
-                cin >> option;
-                int result = execution(id,accounts,transHistory,option);
-                if (result == 0)    break;
-                else if (result > 0){
-                    updateData(accounts);
-                    cout << "Bạn có muốn tiếp tục giao dịch? 1. Có   0. Không\n";
-                    cout << "Lựa chọn của bạn là: ";
-                    cin >> isRunning;
-                }
-                else{
-                    cout << "Giao dịch không hợp lệ:\n";
-                }
-                Sleep(1500);
-                system("cls");
-            }
-            header();
-            cout << "Kết thúc phiên giao dịch\n";
-            cout << "Cảm ơn quý khách. Chúc quý khách một ngày tốt lành\n";
-            Sleep(1000);
-        }
-        else if (isAdmin(id,pin)){
-            cout << "Đang lưu lịch sử giao dịch...\n";
-            saveTransactionHistory(id,transHistory);
-            Sleep(3000);
-            cout << "Lưu lịch sử giao dịch hoàn tất!\n";
-            cout << "Tắt thiết bị\n";
-            Sleep(1000);
-            exit(0);
-        }
-        else{
-            wrongTimes++;
-            cout << "Tài khoản không hợp lệ!\n";
-            if (wrongTimes >= wrongLimit){
-                cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
-                cout << "Vì lý do bảo mật, thiết bị sẽ tự động thoát sau 3 giây nữa\n";
-                saveTransactionHistory(id,transHistory);
-            }
-            Sleep(3000);
-        }
-        if (wrongTimes >= wrongLimit)   exit(0);
-        system("cls");
-    }
-}
-
+void printBalance(const int& amount);
+bool shutDown(const vector<Transaction>& transHistory);
+bool turnOn();
+void working();
 
 
 int main()
 {
     initConsole();
-    int isOn = 0;
-    if (adminAuth() == false){
+    if (turnOn() == false){
         exit(0);
     }
-    Working();
+    working();
     return 0;
 }
 
@@ -252,7 +141,6 @@ int getBalance(const string& id,const vector<User>& accounts){
             return account.balance;
         }
     }
-    // Neu khong tim thay account
     return -1;
 }
 bool exceedLimit (const string& id, const vector<Transaction>& transHistory){
@@ -267,14 +155,13 @@ bool exceedLimit (const string& id, const vector<Transaction>& transHistory){
 void recordTransaction (const string& id, const int& amount, vector<Transaction>& trans){
     trans.push_back({id,amount});
 }
-void saveTransactionHistory (const string& id,const vector<Transaction>& transHistory){
+void saveTransactionHistory (const vector<Transaction>& transHistory){
     string fileName = "";
     time_t now = time(0);
     tm* t = localtime(&now);
     fileName = to_string(t->tm_mday)
     + "_" + to_string(t->tm_mon+1)
     + "_" + to_string(t->tm_year+1900)
-    + "_" + id
     + ".txt";
 
     ofstream outputFile(fileName.c_str());
@@ -295,9 +182,8 @@ int execution(const string& id,vector<User>& accounts,vector<Transaction>& trans
             cin >> amount;
             if (deposit(id,amount,accounts)){
                 cout << "Nộp tiền thành công!\n";
-                cout << "Số tiền hiện tại: ";
                 int money = getBalance(id,accounts);
-                printMoney(money);
+                printBalance(money);
                 recordTransaction(id,amount,transHistory);
             }
             else{
@@ -307,16 +193,14 @@ int execution(const string& id,vector<User>& accounts,vector<Transaction>& trans
             return 1;
         }
         case 2:{
-            cout << "Số dư hiện tại: ";
             int money = getBalance(id,accounts);
-            printMoney(money);
+            printBalance(money);
             cout << "Nhập số tiền muốn rút: ";
             cin >> amount;
             if (withdraw(id,amount,accounts)){
                 cout << "Rút tiền thành công!\n";
-                cout << "Số dư hiện tại: ";
                 int money = getBalance(id,accounts);
-                printMoney(money);
+                printBalance(money);
                 recordTransaction(id,-1*amount,transHistory);
             }
             else{
@@ -337,7 +221,6 @@ int execution(const string& id,vector<User>& accounts,vector<Transaction>& trans
             return 0;
         }
         default:{
-            cout << "Lựa chọn không hợp lệ!\n";
             return -1;
         }
     }
@@ -349,7 +232,7 @@ void updateData(vector<User>& accounts){
         }
     writeToFile(data,USER_ACCOUNT_FILE);
 }
-void printMoney(const int& amount){
+void printBalance(const int& amount){
     string s = to_string(amount);
     int p = 0;
     string r = "";
@@ -359,5 +242,123 @@ void printMoney(const int& amount){
         if (p % 3 == 0 && i > 0) r += ".";
     }
     reverse(r.begin(),r.end());
+    cout << "Số dư hiện tại là: ";
     cout << r << '\n';
 }
+bool turnOn(){
+    string id,pin;
+    int wrongTimes = 0;
+    while(1){
+        header();
+        cout << "      ĐĂNG NHẬP BẰNG TÀI KHOẢN ADMIN ĐỂ KHỞI ĐỘNG THIẾT BỊ\n";
+        cout << "Nhập ID Admin: ";
+        cin >> id;
+        cout << "Nhập mã PIN: ";
+        cin >> pin;
+        if (isAdmin(id,pin)){
+            cout << "================================================================" << '\n';
+            cout << "                           THÔNG BÁO!\n";
+            cout << "                 KHỞI ĐỘNG THIẾT BỊ THÀNH CÔNG!\n";
+            Sleep(1500);
+            system("cls");
+            return true;
+        }
+        else{
+            cout << "Tài khoản không hợp lệ\n";
+            cout << "Xin mời nhập lại\n";
+            wrongTimes++;
+            if (wrongTimes >= wrongLimit){
+                system("cls");
+                header();
+                cout << "                           THÔNG BÁO!\n";
+                cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
+                cout << "Vì lý do bảo mật, thiết bị sẽ tự động thoát sau 3 giây nữa\n";
+                Sleep(3000);
+                return false;
+            }
+            Sleep(1500);
+        }
+    }
+}
+void working(){
+    vector<Transaction>transHistory;
+    vector<User>accounts = readAccountFromFile(USER_ACCOUNT_FILE);
+    int wrongTimes = 0;
+    string id,pin;
+    while (1){
+        header();
+        cout << "Nhập ID: ";
+        cin >> id;
+        cout << "Nhập mã PIN: ";
+        cin >> pin;
+        if (isUser(id,pin)){
+            header();
+            cout << "Đăng nhập thành công!\n";
+            cout << "Mời bạn thực hiện giao dịch\n";
+            Sleep(1500);
+            header();
+            int isRunning = true;
+            int option = 0;
+            while (isRunning){
+                if (exceedLimit(id,transHistory)){
+                    cout << "Bạn đã thực hiện quá số lần giao dịch trong 1 ngày\n";
+                    cout << "Xin hãy quay lại vào hôm sau\n";
+                    Sleep(2500);
+                    break;
+                }
+                header();
+                cout << "Xin mời bạn nhập lựa chọn giao dịch\n";
+                cout << "1. Nộp tiền\n";
+                cout << "2. Rút tiền\n";
+                cout << "3. Kiểm tra số dư\n";
+                cout << "0. Thoát\n";
+                cout << "Lựa chọn của quý khách là: ";
+                cin >> option;
+                int result = execution(id,accounts,transHistory,option);
+                if (result == 0)    break;
+                else if (result > 0){
+                    updateData(accounts);
+                    cout << "Bạn có muốn tiếp tục giao dịch? 1. Có   0. Không\n";
+                    cout << "Lựa chọn của bạn là: ";
+                    cin >> isRunning;
+                }
+                else{
+                    cout << "Lựa chọn không hợp lệ:\n";
+                }
+                Sleep(1500);
+                system("cls");
+            }
+            header();
+            cout << "Kết thúc phiên giao dịch\n";
+            cout << "Cảm ơn quý khách. Chúc quý khách một ngày tốt lành\n";
+            Sleep(1000);
+        }
+        else if (isAdmin(id,pin)){
+            shutDown(transHistory);
+        }
+        else{
+            wrongTimes++;
+            cout << "Tài khoản không hợp lệ\n";
+            cout << "Xin mời nhập lại\n";   ad
+            if (wrongTimes >= wrongLimit){
+                cout << "                           THÔNG BÁO!\n";
+                cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
+                cout << "Vì lý do bảo mật, thiết bị sẽ tự động thoát sau 3 giây nữa\n";
+                saveTransactionHistory(transHistory);
+                Sleep(3000);
+                exit(0);
+            }
+            Sleep(1500);
+        }
+    }
+}
+bool shutDown(const vector<Transaction>& transHistory){
+    cout << "Đang lưu lịch sử giao dịch...\n";
+    saveTransactionHistory(transHistory);
+    Sleep(3000);
+    cout << "Lưu lịch sử giao dịch hoàn tất!\n";
+    cout << "Tắt thiết bị\n";
+    Sleep(1000);
+    exit(0);
+}
+

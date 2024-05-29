@@ -52,7 +52,7 @@ void DisableResizeWindow()
 
 void initConsole(){
     ShowScrollbar(0);
-    //hideConsoleButton();
+    hideConsoleButton();
     SetConsoleOutputCP(65001);
     SetConsoleTitle(TEXT("ATM Management"));
     DisableResizeWindow();
