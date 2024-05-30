@@ -34,15 +34,15 @@ struct Transaction{
 
 vector<User> readAccountFromFile(const string& fileName);
 void writeToFile (const string& data, const string& fileName);
-bool isUser(const string& id,const string& pin);
+int isUser(const string& id,const string& pin);
 bool isAdmin(const string& id,const string& pin);
-bool deposit (const string& id,const int& amount,vector<User>& accounts);
-bool withdraw (const string& id,const int& amount,vector<User>& accounts);
-int getBalance(const string& id,const vector<User>& accounts);
+bool deposit (const int& idx,const int& amount,vector<User>& accounts);
+bool withdraw (const int& idx,const int& amount,vector<User>& accounts);
+int getBalance(const int& idx,const vector<User>& accounts);
 bool exceedLimit (const string& id, const vector<Transaction>& transHistory);
 void recordTransaction (const string& id, const int& amount, vector<Transaction>& trans);
 void saveTransactionHistory (const vector<Transaction>& transHistory);
-int execution(const string& id,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
+int execution(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
 void updateData(vector<User>& accounts);
 void printBalance(const int& amount);
 bool shutDown(const vector<Transaction>& transHistory);
@@ -84,14 +84,15 @@ void writeToFile (const string& data,const string& fileName){
     outputFile << data;
     outputFile.close();
 }
-bool isUser(const string& id,const string& pin){
+int isUser(const string& id,const string& pin){
     vector<User>accounts = readAccountFromFile(USER_ACCOUNT_FILE);
-    for (User account : accounts){
-        if (account.id == id && account.pin == pin){
-            return true;
+    int n = accounts.size();
+    for (int i = 0;i < n;++i){
+        if (accounts[i].id == id && accounts[i].pin == pin){
+            return i;
         }
     }
-    return false;
+    return -1;
 }
 bool isAdmin(const string& id,const string& pin){
     ifstream inputFile(ADMIN_ACCOUNT_FILE.c_str());
@@ -107,39 +108,34 @@ bool isAdmin(const string& id,const string& pin){
     }
     return false;
 }
-bool deposit (const string& id,const int& amount,vector<User>& accounts){
+bool deposit (const int& idx,const int& amount,vector<User>& accounts){
     if (amount <= 0)    return false;
     if (amount % 50000 != 0){
         cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
         return false;
     }
-    for (User& account: accounts){
-        if (account.id == id){
-            account.balance += amount;
-            return true;
-        }
+    // index is valid -> there is a user with index idx
+    if (idx != -1){
+        accounts[idx].balance += amount;
+        return true;
     }
     return false;
 }
-bool withdraw (const string& id,const int& amount,vector<User>& accounts){
+bool withdraw (const int& idx,const int& amount,vector<User>& accounts){
     if (amount <= 0)    return false;
     if (amount % 50000 != 0){
         cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
         return false;
     }
-    for (User& account: accounts){
-        if (account.id == id && account.balance >= amount){
-            account.balance -= amount;
-            return true;
-        }
+    if (idx != -1){
+        accounts[idx].balance -= amount;
+        return true;
     }
     return false;
 }
-int getBalance(const string& id,const vector<User>& accounts){
-    for (const User& account : accounts){
-        if (account.id == id){
-            return account.balance;
-        }
+int getBalance(const int& idx,const vector<User>& accounts){
+    if (idx != -1){
+        return accounts[idx].balance;
     }
     return -1;
 }
@@ -172,7 +168,7 @@ void saveTransactionHistory (const vector<Transaction>& transHistory){
     }
     outputFile.close();
 }
-int execution(const string& id,vector<User>& accounts,vector<Transaction>& transHistory,const int& option){
+int execution(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option){
     Sleep(1000);
     header();
     int amount = 0;
@@ -180,11 +176,11 @@ int execution(const string& id,vector<User>& accounts,vector<Transaction>& trans
         case 1:{
             cout << "Nhập số tiền muốn nộp: ";
             cin >> amount;
-            if (deposit(id,amount,accounts)){
+            if (deposit(idx,amount,accounts)){
                 cout << "Nộp tiền thành công!\n";
-                int money = getBalance(id,accounts);
+                int money = getBalance(idx,accounts);
                 printBalance(money);
-                recordTransaction(id,amount,transHistory);
+                recordTransaction(accounts[idx].id,amount,transHistory);
             }
             else{
                 cout << "Nộp tiền không thành công\n";
@@ -193,15 +189,15 @@ int execution(const string& id,vector<User>& accounts,vector<Transaction>& trans
             return 1;
         }
         case 2:{
-            int money = getBalance(id,accounts);
+            int money = getBalance(idx,accounts);
             printBalance(money);
             cout << "Nhập số tiền muốn rút: ";
             cin >> amount;
-            if (withdraw(id,amount,accounts)){
+            if (withdraw(idx,amount,accounts)){
                 cout << "Rút tiền thành công!\n";
-                int money = getBalance(id,accounts);
+                int money = getBalance(idx,accounts);
                 printBalance(money);
-                recordTransaction(id,-1*amount,transHistory);
+                recordTransaction(accounts[idx].id,-1*amount,transHistory);
             }
             else{
                 cout << "Rút tiền không thành công\n";
@@ -211,9 +207,9 @@ int execution(const string& id,vector<User>& accounts,vector<Transaction>& trans
         }
         case 3:{
             cout << "Số dư hiện tại: ";
-            int money = getBalance(id,accounts);
-            printMoney(money);
-            recordTransaction(id,amount,transHistory);
+            int money = getBalance(idx,accounts);
+            printBalance(money);
+            recordTransaction(accounts[idx].id,amount,transHistory);
             return 3;
         }
         case 0:{
@@ -291,8 +287,9 @@ void working(){
         cin >> id;
         cout << "Nhập mã PIN: ";
         cin >> pin;
-        if (isUser(id,pin)){
+        if (isUser(id,pin) != -1){
             header();
+            int idx = isUser(id,pin);
             cout << "Đăng nhập thành công!\n";
             cout << "Mời bạn thực hiện giao dịch\n";
             Sleep(1500);
@@ -314,7 +311,7 @@ void working(){
                 cout << "0. Thoát\n";
                 cout << "Lựa chọn của quý khách là: ";
                 cin >> option;
-                int result = execution(id,accounts,transHistory,option);
+                int result = execution(idx,accounts,transHistory,option);
                 if (result == 0)    break;
                 else if (result > 0){
                     updateData(accounts);
@@ -339,7 +336,7 @@ void working(){
         else{
             wrongTimes++;
             cout << "Tài khoản không hợp lệ\n";
-            cout << "Xin mời nhập lại\n";   ad
+            cout << "Xin mời nhập lại\n";
             if (wrongTimes >= wrongLimit){
                 cout << "                           THÔNG BÁO!\n";
                 cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
