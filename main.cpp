@@ -4,7 +4,6 @@
 #include <vector>
 #include <algorithm>
 #include <time.h>
-#include <ctime>
 #include "console.h"
 
 using namespace std;
@@ -12,7 +11,7 @@ using namespace std;
 const string USER_ACCOUNT_FILE = "useraccounts.txt";
 const string ADMIN_ACCOUNT_FILE = "adminaccounts.txt";
 const int TRANSACTION_LIMIT = 3;
-const int wrongLimit = 3;
+const int WRONGLIMIT = 3;
 
 struct User{
     string id;
@@ -24,7 +23,6 @@ struct User{
 struct Admin{
     string id;
     string pin;
-    string name;
 };
 
 struct Transaction{
@@ -260,7 +258,7 @@ bool turnOn(){
             cout << "Tài khoản không hợp lệ\n";
             cout << "Xin mời nhập lại\n";
             wrongTimes++;
-            if (wrongTimes >= wrongLimit){
+            if (wrongTimes >= WRONGLIMIT){
                 system("cls");
                 header();
                 cout << "                           THÔNG BÁO!\n";
@@ -334,7 +332,7 @@ void working(){
             wrongTimes++;
             cout << "Tài khoản không hợp lệ\n";
             cout << "Xin mời nhập lại\n";
-            if (wrongTimes >= wrongLimit){
+            if (wrongTimes >= WRONGLIMIT){
                 cout << "                           THÔNG BÁO!\n";
                 cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
                 cout << "Vì lý do bảo mật, thiết bị sẽ tự động thoát sau 3 giây nữa\n";
