@@ -34,7 +34,7 @@ struct Transaction{
 
 vector<User> readAccountFromFile(const string& fileName);
 void writeToFile (const string& data, const string& fileName);
-int isUser(const string& id,const string& pin);
+int isUser(const string& id,const string& pin,const vector<User>& accounts);
 bool isAdmin(const string& id,const string& pin);
 bool deposit (const int& idx,const int& amount,vector<User>& accounts);
 bool withdraw (const int& idx,const int& amount,vector<User>& accounts);
@@ -42,7 +42,7 @@ int getBalance(const int& idx,const vector<User>& accounts);
 bool exceedLimit (const string& id, const vector<Transaction>& transHistory);
 void recordTransaction (const string& id, const int& amount, vector<Transaction>& trans);
 void saveTransactionHistory (const vector<Transaction>& transHistory);
-int execution(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
+int processTransaction(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
 void updateData(vector<User>& accounts);
 void printBalance(const int& amount);
 bool shutDown(const vector<Transaction>& transHistory);
@@ -84,8 +84,7 @@ void writeToFile (const string& data,const string& fileName){
     outputFile << data;
     outputFile.close();
 }
-int isUser(const string& id,const string& pin){
-    vector<User>accounts = readAccountFromFile(USER_ACCOUNT_FILE);
+int isUser(const string& id,const string& pin,const vector<User>& accounts){
     int n = accounts.size();
     for (int i = 0;i < n;++i){
         if (accounts[i].id == id && accounts[i].pin == pin){
@@ -148,8 +147,8 @@ bool exceedLimit (const string& id, const vector<Transaction>& transHistory){
     }
     return cnt > TRANSACTION_LIMIT;
 }
-void recordTransaction (const string& id, const int& amount, vector<Transaction>& trans){
-    trans.push_back({id,amount});
+void recordTransaction (const string& id, const int& amount, vector<Transaction>& transHistory){
+    transHistory.push_back({id,amount});
 }
 void saveTransactionHistory (const vector<Transaction>& transHistory){
     string fileName = "";
@@ -168,7 +167,7 @@ void saveTransactionHistory (const vector<Transaction>& transHistory){
     }
     outputFile.close();
 }
-int execution(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option){
+int processTransaction(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option){
     Sleep(1000);
     header();
     int amount = 0;
@@ -206,7 +205,6 @@ int execution(const int& idx,vector<User>& accounts,vector<Transaction>& transHi
             return 2;
         }
         case 3:{
-            cout << "Số dư hiện tại: ";
             int money = getBalance(idx,accounts);
             printBalance(money);
             recordTransaction(accounts[idx].id,amount,transHistory);
@@ -238,8 +236,7 @@ void printBalance(const int& amount){
         if (p % 3 == 0 && i > 0) r += ".";
     }
     reverse(r.begin(),r.end());
-    cout << "Số dư hiện tại là: ";
-    cout << r << '\n';
+    cout << "Số dư hiện tại là: " << r << " VNĐ\n";
 }
 bool turnOn(){
     string id,pin;
@@ -287,9 +284,9 @@ void working(){
         cin >> id;
         cout << "Nhập mã PIN: ";
         cin >> pin;
-        if (isUser(id,pin) != -1){
+        if (isUser(id,pin,accounts) != -1){
             header();
-            int idx = isUser(id,pin);
+            int idx = isUser(id,pin,accounts);
             cout << "Đăng nhập thành công!\n";
             cout << "Mời bạn thực hiện giao dịch\n";
             Sleep(1500);
@@ -311,7 +308,7 @@ void working(){
                 cout << "0. Thoát\n";
                 cout << "Lựa chọn của quý khách là: ";
                 cin >> option;
-                int result = execution(idx,accounts,transHistory,option);
+                int result = processTransaction(idx,accounts,transHistory,option);
                 if (result == 0)    break;
                 else if (result > 0){
                     updateData(accounts);
@@ -358,4 +355,3 @@ bool shutDown(const vector<Transaction>& transHistory){
     Sleep(1000);
     exit(0);
 }
-
