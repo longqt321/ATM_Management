@@ -124,6 +124,10 @@ bool withdraw (const int& idx,const int& amount,vector<User>& accounts){
         cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
         return false;
     }
+    if (amount > accounts[idx].balance){
+        cout << "Số dư tài khoản không đủ\n";
+        return false;
+    }
     if (idx != -1){
         accounts[idx].balance -= amount;
         return true;
@@ -286,13 +290,14 @@ void working(){
             header();
             int idx = isUser(id,pin,accounts);
             cout << "Đăng nhập thành công!\n";
-            cout << "Mời bạn thực hiện giao dịch\n";
+            cout << "Mời bạn " << accounts[idx].name << " thực hiện giao dịch\n";
             Sleep(1500);
             header();
             int isRunning = true;
             int option = 0;
             while (isRunning){
                 if (exceedLimit(id,transHistory)){
+                    header();
                     cout << "Bạn đã thực hiện quá số lần giao dịch trong 1 ngày\n";
                     cout << "Xin hãy quay lại vào hôm sau\n";
                     Sleep(2500);
