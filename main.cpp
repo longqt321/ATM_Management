@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <time.h>
-#include "console.h"
+#include <windows.h>
 
 using namespace std;
 
@@ -18,10 +18,6 @@ struct User{
     string pin;
     string name;
     long long balance;
-
-    bool operator<(const User& other) const{
-        return id < other.id;
-    }
 };
 
 struct Admin{
@@ -403,8 +399,8 @@ void quicksort(vector<User>& accounts,int l,int r){
     int mid = (left+right)/2;
     string pivot = accounts[mid].id;
     while (left <= right){
-        while (vt[left].id < pivot) left++;
-        while (vt[right].id > pivot) right--;
+        while (accounts[left].id < pivot) left++;
+        while (accounts[right].id > pivot) right--;
         if (left > right)  break;
         swap(accounts[left],accounts[right]);
         left++;
