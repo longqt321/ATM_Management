@@ -122,7 +122,6 @@ bool deposit (const int& idx,const long long& amount,vector<User>& accounts){
         cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
         return false;
     }
-    // index is valid -> there is a user with index idx
     if (idx != -1){
         accounts[idx].balance += amount;
         return true;
