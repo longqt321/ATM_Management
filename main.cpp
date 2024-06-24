@@ -11,13 +11,17 @@ using namespace std;
 const string USER_ACCOUNT_FILE = "useraccounts.txt";
 const string ADMIN_ACCOUNT_FILE = "adminaccounts.txt";
 const int TRANSACTION_LIMIT = 3;
-const int WRONGLIMIT = 3;
+const int WRONG_LIMIT = 3;
 
 struct User{
     string id;
     string pin;
     string name;
-    int balance;
+    long long balance;
+
+    bool operator<(const User& other) const{
+        return id < other.id;
+    }
 };
 
 struct Admin{
@@ -27,23 +31,26 @@ struct Admin{
 
 struct Transaction{
     string id;
-    int amount;
+    long long amount;
 };
 
 vector<User> readAccountFromFile(const string& fileName);
 void writeToFile (const string& data, const string& fileName);
 int isUser(const string& id,const string& pin,const vector<User>& accounts);
 bool isAdmin(const string& id,const string& pin);
-bool deposit (const int& idx,const int& amount,vector<User>& accounts);
-bool withdraw (const int& idx,const int& amount,vector<User>& accounts);
-int getBalance(const int& idx,const vector<User>& accounts);
+bool deposit (const int& idx,const long long& amount,vector<User>& accounts);
+bool withdraw (const int& idx,const long long& amount,vector<User>& accounts);
+long long getBalance(const int& idx,const vector<User>& accounts);
 bool exceedLimit (const string& id, const vector<Transaction>& transHistory);
-void recordTransaction (const string& id, const int& amount, vector<Transaction>& trans);
+void recordTransaction (const string& id, const long long& amount, vector<Transaction>& trans);
 void saveTransactionHistory (const vector<Transaction>& transHistory);
 int processTransaction(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option);
 void updateData(vector<User>& accounts);
-void printBalance(const int& amount);
+void printBalance(const long long& amount);
 bool shutDown(const vector<Transaction>& transHistory);
+void quicksort(vector<User>& accounts,int l,int r);
+void initConsole();
+void header();
 bool turnOn();
 void working();
 
@@ -66,7 +73,7 @@ vector<User> readAccountFromFile(const string& fileName){
     }
     vector<User>accounts;
     string id,pin,name;
-    int balance;
+    long long balance;
     while(inputFile >> id >> pin >> name >> balance){
         accounts.push_back({id,pin,name,balance});
     }
@@ -83,10 +90,18 @@ void writeToFile (const string& data,const string& fileName){
     outputFile.close();
 }
 int isUser(const string& id,const string& pin,const vector<User>& accounts){
-    int n = accounts.size();
-    for (int i = 0;i < n;++i){
-        if (accounts[i].id == id && accounts[i].pin == pin){
-            return i;
+    int left = 0, right = accounts.size()-1;
+    while (left <= right){
+        int mid = (left+right)/2;
+        User acnt = accounts[mid];
+        if (acnt.id == id && acnt.pin == pin){
+            return mid;
+        }
+        else if (id < acnt.id){
+            right = mid-1;
+        }
+        else{
+            left = mid+1;
         }
     }
     return -1;
@@ -105,7 +120,7 @@ bool isAdmin(const string& id,const string& pin){
     }
     return false;
 }
-bool deposit (const int& idx,const int& amount,vector<User>& accounts){
+bool deposit (const int& idx,const long long& amount,vector<User>& accounts){
     if (amount <= 0)    return false;
     if (amount % 50000 != 0){
         cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
@@ -118,7 +133,7 @@ bool deposit (const int& idx,const int& amount,vector<User>& accounts){
     }
     return false;
 }
-bool withdraw (const int& idx,const int& amount,vector<User>& accounts){
+bool withdraw (const int& idx,const long long& amount,vector<User>& accounts){
     if (amount <= 0)    return false;
     if (amount % 50000 != 0){
         cout << "Vui lòng nhập số tiền là bội số của 50.000\n";
@@ -134,22 +149,22 @@ bool withdraw (const int& idx,const int& amount,vector<User>& accounts){
     }
     return false;
 }
-int getBalance(const int& idx,const vector<User>& accounts){
+long long getBalance(const int& idx,const vector<User>& accounts){
     if (idx != -1){
         return accounts[idx].balance;
     }
     return -1;
 }
 bool exceedLimit (const string& id, const vector<Transaction>& transHistory){
-    int cnt = 1;
+    int cnt = 0;
     for (Transaction trans : transHistory){
         if (trans.id == id && trans.amount != 0){
             ++cnt;
         }
     }
-    return cnt > TRANSACTION_LIMIT;
+    return cnt >= TRANSACTION_LIMIT;
 }
-void recordTransaction (const string& id, const int& amount, vector<Transaction>& transHistory){
+void recordTransaction (const string& id, const long long& amount, vector<Transaction>& transHistory){
     transHistory.push_back({id,amount});
 }
 void saveTransactionHistory (const vector<Transaction>& transHistory){
@@ -172,14 +187,14 @@ void saveTransactionHistory (const vector<Transaction>& transHistory){
 int processTransaction(const int& idx,vector<User>& accounts,vector<Transaction>& transHistory,const int& option){
     Sleep(1000);
     header();
-    int amount = 0;
+    long long amount = 0;
     switch (option){
         case 1:{
             cout << "Nhập số tiền muốn nộp: ";
             cin >> amount;
             if (deposit(idx,amount,accounts)){
                 cout << "Nộp tiền thành công!\n";
-                int money = getBalance(idx,accounts);
+                long long money = getBalance(idx,accounts);
                 printBalance(money);
                 recordTransaction(accounts[idx].id,amount,transHistory);
             }
@@ -190,13 +205,13 @@ int processTransaction(const int& idx,vector<User>& accounts,vector<Transaction>
             return 1;
         }
         case 2:{
-            int money = getBalance(idx,accounts);
+            long long money = getBalance(idx,accounts);
             printBalance(money);
             cout << "Nhập số tiền muốn rút: ";
             cin >> amount;
             if (withdraw(idx,amount,accounts)){
                 cout << "Rút tiền thành công!\n";
-                int money = getBalance(idx,accounts);
+                long long money = getBalance(idx,accounts);
                 printBalance(money);
                 recordTransaction(accounts[idx].id,-1*amount,transHistory);
             }
@@ -207,7 +222,7 @@ int processTransaction(const int& idx,vector<User>& accounts,vector<Transaction>
             return 2;
         }
         case 3:{
-            int money = getBalance(idx,accounts);
+            long long money = getBalance(idx,accounts);
             printBalance(money);
             recordTransaction(accounts[idx].id,amount,transHistory);
             return 3;
@@ -225,12 +240,12 @@ void updateData(vector<User>& accounts){
     string data = "";
     for (User x : accounts){
     data = data + x.id + " " + x.pin + " " + x.name + " " + to_string(x.balance) + "\n";
-        }
+    }
     writeToFile(data,USER_ACCOUNT_FILE);
 }
-void printBalance(const int& amount){
+void printBalance(const long long& amount){
     string s = to_string(amount);
-    int p = 0;
+    long long p = 0;
     string r = "";
     for (int i = s.size()-1;i >= 0;--i){
         r += s[i];
@@ -262,7 +277,7 @@ bool turnOn(){
             cout << "Tài khoản không hợp lệ\n";
             cout << "Xin mời nhập lại\n";
             wrongTimes++;
-            if (wrongTimes >= WRONGLIMIT){
+            if (wrongTimes >= WRONG_LIMIT){
                 system("cls");
                 header();
                 cout << "                           THÔNG BÁO!\n";
@@ -278,9 +293,11 @@ bool turnOn(){
 void working(){
     vector<Transaction>transHistory;
     vector<User>accounts = readAccountFromFile(USER_ACCOUNT_FILE);
-    int wrongTimes = 0;
+    int n = accounts.size()-1;
+    quicksort(accounts,0,n);
     string id,pin;
     while (1){
+        int wrongTimes = 0;
         header();
         cout << "Nhập ID: ";
         cin >> id;
@@ -337,7 +354,7 @@ void working(){
             wrongTimes++;
             cout << "Tài khoản không hợp lệ\n";
             cout << "Xin mời nhập lại\n";
-            if (wrongTimes >= WRONGLIMIT){
+            if (wrongTimes >= WRONG_LIMIT){
                 cout << "                           THÔNG BÁO!\n";
                 cout << "Tài khoản và mật khẩu sai vượt quá số lần cho phép!\n";
                 cout << "Vì lý do bảo mật, thiết bị sẽ tự động thoát sau 3 giây nữa\n";
@@ -352,9 +369,49 @@ void working(){
 bool shutDown(const vector<Transaction>& transHistory){
     cout << "Đang lưu lịch sử giao dịch...\n";
     saveTransactionHistory(transHistory);
-    Sleep(3000);
+    Sleep(2000);
     cout << "Lưu lịch sử giao dịch hoàn tất!\n";
     cout << "Tắt thiết bị\n";
     Sleep(1000);
     exit(0);
 }
+void initConsole(){
+    SetConsoleOutputCP(65001);
+    SetConsoleTitle(TEXT("ATM Management"));
+}
+void header() {
+    system("cls");
+    cout << " ______________________________________________________________ " << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|            ĐỒ ÁN PBL1: DỰ ÁN LẬP TRÌNH TÍNH TOÁN             |" << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|                ĐỀ TÀI: XÂY DỰNG ỨNG DỤNG                     |" << '\n';
+    cout << "|              THỰC HIỆN GIAO DỊCH TRÊN MÁY ATM                |" << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|        GVHD: Trần Hồ Thủy Tiên                               |" << '\n';
+    cout << "|        Nhóm thực hiện:                                       |" << '\n';
+    cout << "|              Trần Đức Long     (23T_Nhat1)  MSSV: 102230027  |" << '\n';
+    cout << "|              Hoàng Vũ Tấn Phát (19TCLC_DT4) MSSV: 102190182  |" << '\n';
+    cout << "|              Nguyễn Gia Khánh  (19TCLC_DT3) MSSV: 102190120  |" << '\n';
+    cout << "|                                                              |" << '\n';
+    cout << "|______________________________________________________________|" << '\n';
+}
+void quicksort(vector<User>& accounts,int l,int r){
+    if (l > r) return;
+    int left = l;
+    int right = r;
+    int mid = (left+right)/2;
+    string pivot = accounts[mid].id;
+    while (left <= right){
+        while (vt[left].id < pivot) left++;
+        while (vt[right].id > pivot) right--;
+        if (left > right)  break;
+        swap(accounts[left],accounts[right]);
+        left++;
+        right--;
+    }
+    if (left < r) quicksort(accounts,left,r);
+    if (l < right)  quicksort(accounts,l,right);
+}
+
+
